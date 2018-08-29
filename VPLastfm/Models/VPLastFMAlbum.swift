@@ -134,20 +134,10 @@ final public class VPLastFMAlbum: Codable, VPLastFMModel {
 		let artistQuery = URLQueryItem(name: "artist", value: artist)
 		
 		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,albumQuery,artistQuery) else {completion(nil); return}
-		URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
-			do{
-				guard let data = data else {throw LastFMAlbumError.parse}
-				guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMAlbumError.parse}
-				guard let album = json["album"] as? [String:AnyObject] else {throw LastFMAlbumError.parse}
-				let decoder = JSONDecoder()
-				decoder.dateDecodingStrategy = .iso8601
-				let albumJSON = try JSONSerialization.data(withJSONObject: album, options: [])
-				let result = try decoder.decode(VPLastFMAlbum.self, from: albumJSON)
-				completion(result)
-			} catch _{
-				completion(nil)
-			}
-		}).resume()
+        
+        VPLastFMAPIClient.shared.getModel(VPLastFMAlbum.self, url: url, path: ["album"], arrayName: nil) { result in
+            completion(result)
+        }
 	}
 	
 	public func fillInfo(completion:@escaping (VPLastFMAlbum?)->()) {
