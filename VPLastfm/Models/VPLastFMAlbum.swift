@@ -128,20 +128,22 @@ final public class VPLastFMAlbum: Codable, VPLastFMModel {
 		case title
 	}
 	
-	public static func getAlbum(byName name:String, artist:String, completion: @escaping (VPLastFMAlbum?)->()){
+	public static func getAlbum(byName name:String, artist:String, completion: @escaping (VPLastFMAlbum?,Error?)->()){
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Album.getInfo.rawValue)
 		let albumQuery = URLQueryItem(name: "album", value: name)
 		let artistQuery = URLQueryItem(name: "artist", value: artist)
-		
-		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,albumQuery,artistQuery) else {completion(nil); return}
-        
-        VPLastFMAPIClient.shared.getModel(VPLastFMAlbum.self, url: url, path: ["album"], arrayName: nil) { result in
-            completion(result)
+        do{
+            let url = try VPLastFMAPIClient.shared.createURL(with: methodQuery,albumQuery,artistQuery)
+            VPLastFMAPIClient.shared.getModel(VPLastFMAlbum.self, url: url, path: ["album"], arrayName: nil) { result, error  in
+                completion(result, error)
+            }
+        } catch let error{
+            completion(nil,error)
         }
 	}
 	
 	public func fillInfo(completion:@escaping (VPLastFMAlbum?)->()) {
-		VPLastFMAlbum.getAlbum(byName: self.name, artist: (self.artist?.name)!) {album in
+        VPLastFMAlbum.getAlbum(byName: self.name, artist: (self.artist?.name)!) {album,_  in
 			album?.tracks?.forEach{$0.album = self}
 			completion(album)
 		}

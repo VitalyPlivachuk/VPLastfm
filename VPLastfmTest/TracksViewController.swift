@@ -53,22 +53,28 @@ class TracksViewController: UIViewController {
     
     func getTopTracks(by tag:VPLastFMTag){
         navigationItem.title = tag.name
-        tag.getTopTracks { tracks in
-            self.items = tracks
+        tag.getTopTracks {[weak self] tracks,error  in
+            if let error = error{
+                self?.showMessage(error: error)
+            }
+            self?.items = tracks ?? []
         }
     }
     
     func getSimilarTracks(to track:VPLastFMTrack){
         navigationItem.title = track.name
-        track.getSimilar(limit: tracksLimit) {[weak self] tracks in
-            self?.items = tracks
+        track.getSimilar(limit: tracksLimit) {[weak self] tracks,error in
+            self?.items = tracks ?? []
         }
     }
     
     func getTop(){
-        VPLastFMTag.getTopTags(completion: {[weak self] tags in
+        VPLastFMTag.getTopTags(completion: {[weak self] tags,error  in
+            if let error = error{
+                self?.showMessage(error: error)
+            }
             self?.navigationItem.titleView?.layoutSubviews()
-            self?.items = tags
+            self?.items = tags ?? []
         })
     }
 }
@@ -105,6 +111,15 @@ extension TracksViewController: UITableViewDelegate, UITableViewDataSource{
             tracksViewController.model = model
             self.navigationController?.pushViewController(tracksViewController, animated: true)
         }
+    }
+}
+
+extension UIViewController{
+    func showMessage(error:Error){
+        let alertController = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
+        let okAction = UIAlertAction(title: "Ok", style: .default)
+        alertController.addAction(okAction)
+        self.present(alertController, animated: true)
     }
 }
 

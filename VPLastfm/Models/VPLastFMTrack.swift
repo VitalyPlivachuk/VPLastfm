@@ -92,7 +92,7 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
         let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Track.getCorrection.rawValue)
         let artistQuery = URLQueryItem(name: "artist", value: artist)
         let trackQuery = URLQueryItem(name: "track", value: name)
-        guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery, trackQuery) else {completion(nil,nil); return}
+        guard let url = try? VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery, trackQuery) else {completion(nil,nil); return}
         
         URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
             do{
@@ -111,71 +111,87 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
         }).resume()
     }
     
-    public static func getTrack(byName name:String, artist:String, completion: @escaping (VPLastFMTrack?)->()){
+    public static func getTrack(byName name:String, artist:String, completion: @escaping (VPLastFMTrack?,Error?)->()){
         let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Track.getInfo.rawValue)
         let trackQuery = URLQueryItem(name: "track", value: name)
         let artistQuery = URLQueryItem(name: "artist", value: artist)
-        guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,trackQuery,artistQuery) else {completion(nil); return}
-        
-        VPLastFMAPIClient.shared.getModel(VPLastFMTrack.self, url: url, path: ["track"], arrayName: nil) { result in
-            completion(result)
+        do{
+            let url = try VPLastFMAPIClient.shared.createURL(with: methodQuery,trackQuery,artistQuery)
+            VPLastFMAPIClient.shared.getModel(VPLastFMTrack.self, url: url, path: ["track"], arrayName: nil) { result, error  in
+                completion(result, error)
+            }
+        } catch let error{
+            completion(nil,error)
         }
     }
     
-    public func getSimilar(limit:Int,completion:@escaping ([VPLastFMTrack])->()) {
+    public func getSimilar(limit:Int,completion:@escaping ([VPLastFMTrack]?,Error?)->()) {
         let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Track.getSimilar.rawValue)
         let limitQuery = URLQueryItem(name: "limit", value: String(limit))
         let artistQuery = URLQueryItem(name: "artist", value: self.artist.name)
         let trackQuery = URLQueryItem(name: "track", value: self.name)
-        
-        guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,limitQuery,artistQuery,trackQuery) else {completion([]); return}
-        
-        VPLastFMAPIClient.shared.getModel([VPLastFMTrack].self, url: url, path: ["similartracks"], arrayName: "track") { result in
-            completion(result ?? [])
+        do{
+            let url = try VPLastFMAPIClient.shared.createURL(with: methodQuery,limitQuery,artistQuery,trackQuery)
+            VPLastFMAPIClient.shared.getModel([VPLastFMTrack].self, url: url, path: ["similartracks"], arrayName: "track") { result, error  in
+                completion(result, error)
+            }
+        } catch let error{
+            completion(nil,error)
         }
     }
     
-    public func getSimilarByTags(limit:Int, completion:@escaping ([VPLastFMTrack])->()){
+    public func getSimilarByTags(limit:Int, completion:@escaping ([VPLastFMTrack]?,Error?)->()){
         var result: [VPLastFMTrack] = []
-        self.artist.getSimilar(limit: Int(limit/3)) { similarArtists in
+        self.artist.getSimilar(limit: Int(limit/3)) { similarArtists,error  in
             let dg = DispatchGroup()
-            for artist in similarArtists{
+            
+            similarArtists?.forEach{
                 dg.enter()
-                artist.getTopTracks(limit: 3, completion: { tracks in
-                    result.append(contentsOf: tracks)
+                $0.getTopTracks(limit: 3, completion: { tracks,error  in
+                    tracks?.forEach{
+                        result.append($0)
+                    }
                     dg.leave()
                 })
             }
             dg.notify(queue: .main, execute: {
                 var filteredResult = result.uniqueElements
                 filteredResult.shuffle()
-                completion(filteredResult)
+                completion(filteredResult, nil)
             })
         }
     }
     
     
-    public static func getTop(limit:Int = 50, completion: @escaping ([VPLastFMTrack])->()) {
+    public static func getTop(limit:Int = 50, completion: @escaping ([VPLastFMTrack]?,Error?)->()) {
         let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Chart.getTopTracks.rawValue)
         let limitQuery = URLQueryItem(name: "limit", value: String(limit))
-        guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,limitQuery) else {completion([]); return}
-        
-        VPLastFMAPIClient.shared.getModel([VPLastFMTrack].self, url: url, path: ["tracks"], arrayName: "track") { result in
-            completion(result ?? [])
+        do{
+            let url = try VPLastFMAPIClient.shared.createURL(with: methodQuery,limitQuery)
+            VPLastFMAPIClient.shared.getModel([VPLastFMTrack].self, url: url, path: ["tracks"], arrayName: "track") { result, error  in
+                completion(result, error)
+            }
+        } catch let error{
+            completion(nil,error)
         }
     }
     
-    public func getTopTags(limit:Int = 10, completion:@escaping ([VPLastFMTag])->()) {
+    public func getTopTags(limit:Int = 10, completion:@escaping ([VPLastFMTag]?,Error?)->()) {
         let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Track.getTopTags.rawValue)
         let artistQuery = URLQueryItem(name: "artist", value: self.artist.name)
         let trackQuery = URLQueryItem(name: "track", value: self.name)
         let limitQuery = URLQueryItem(name: "limit", value: String(limit))
-        guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery,trackQuery,limitQuery) else {completion([]); return}
-        
-        VPLastFMAPIClient.shared.getModel([VPLastFMTag].self, url: url, path: ["toptags"], arrayName: "tag") { result in
-            completion(result ?? [])
+        do{
+            let url = try VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery,trackQuery,limitQuery)
+            VPLastFMAPIClient.shared.getModel([VPLastFMTag].self, url: url, path: ["toptags"], arrayName: "tag") { result, error  in
+                completion(result, error)
+            }
+        } catch let error{
+            completion(nil,error)
         }
     }
+    
+    
     
     public func love(completion: @escaping (Bool)->()) {
         
@@ -186,7 +202,7 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
             "sk" : VPLastFMLoginManager.authData!.key
         ]
         
-        let apiSig = VPLastFMAPIClient.shared.createApiSigString(with: apiSigComponents)
+        let apiSig = try! VPLastFMAPIClient.shared.createApiSigString(with: apiSigComponents)
         
         let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Track.love.rawValue)
         let artistQuery = URLQueryItem(name: "artist", value: self.artist.name)
@@ -194,7 +210,7 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
         let apiSigQuery = URLQueryItem(name: "api_sig", value: apiSig)
         let skQuery = URLQueryItem(name: "sk", value: VPLastFMLoginManager.authData?.key)
         
-        var request = URLRequest(url: VPLastFMAPIClient.shared.createURL(with: methodQuery, artistQuery, trackQuery, apiSigQuery,skQuery)!)
+        var request = URLRequest(url: try! VPLastFMAPIClient.shared.createURL(with: methodQuery, artistQuery, trackQuery, apiSigQuery,skQuery))
         request.httpMethod = "POST"
         URLSession.shared.dataTask(with: request) { (data, response, error) in
             do{
@@ -228,7 +244,7 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
             "sk" : VPLastFMLoginManager.authData!.key
         ]
         
-        let apiSig = VPLastFMAPIClient.shared.createApiSigString(with: apiSigComponents)
+        let apiSig = try! VPLastFMAPIClient.shared.createApiSigString(with: apiSigComponents)
         
         let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Track.unlove.rawValue)
         let artistQuery = URLQueryItem(name: "artist", value: self.artist.name)
@@ -236,7 +252,7 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
         let apiSigQuery = URLQueryItem(name: "api_sig", value: apiSig)
         let skQuery = URLQueryItem(name: "sk", value: VPLastFMLoginManager.authData?.key)
         
-        var request = URLRequest(url: VPLastFMAPIClient.shared.createURL(with: methodQuery, artistQuery, trackQuery, apiSigQuery,skQuery)!)
+        var request = URLRequest(url: try! VPLastFMAPIClient.shared.createURL(with: methodQuery, artistQuery, trackQuery, apiSigQuery,skQuery))
         request.httpMethod = "POST"
         URLSession.shared.dataTask(with: request) { (data, response, error) in
             do{
@@ -264,7 +280,7 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
     
     public func fillInfo( completion: @escaping ()->()) {
         if self.album == nil{
-            VPLastFMTrack.getTrack(byName: self.name, artist: self.artist.name) {[weak self] result in
+            VPLastFMTrack.getTrack(byName: self.name, artist: self.artist.name) {[weak self] result,_  in
                 self?.album = result?.album
                 completion()
             }
@@ -284,7 +300,7 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
             "mbid" : self.mbid
         ]
         
-        let apiSig = VPLastFMAPIClient.shared.createApiSigString(with: apiSigComponents)
+        let apiSig = try! VPLastFMAPIClient.shared.createApiSigString(with: apiSigComponents)
         
         let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Track.scrobble.rawValue)
         let artistQuery = URLQueryItem(name: "artist", value: self.artist.name)
@@ -294,7 +310,7 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
         let skQuery = URLQueryItem(name: "sk", value: VPLastFMLoginManager.authData?.key)
         let mbidQuery = self.mbid != nil ? URLQueryItem(name: "mbid", value: self.mbid!) : nil
         
-        var request = URLRequest(url: VPLastFMAPIClient.shared.createURL(with: methodQuery, artistQuery, trackQuery, apiSigQuery,skQuery,timestampQuery,mbidQuery)!)
+        var request = URLRequest(url: try! VPLastFMAPIClient.shared.createURL(with: methodQuery, artistQuery, trackQuery, apiSigQuery,skQuery,timestampQuery,mbidQuery))
         request.httpMethod = "POST"
         URLSession.shared.dataTask(with: request) { (data, response, error) in
             do{
@@ -327,7 +343,7 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
             "sk" : VPLastFMLoginManager.authData!.key,
             ]
         
-        let apiSig = VPLastFMAPIClient.shared.createApiSigString(with: apiSigComponents)
+        let apiSig = try! VPLastFMAPIClient.shared.createApiSigString(with: apiSigComponents)
         
         let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Track.updateNowPlaying.rawValue)
         let artistQuery = URLQueryItem(name: "artist", value: self.artist.name)
@@ -335,7 +351,7 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
         let apiSigQuery = URLQueryItem(name: "api_sig", value: apiSig)
         let skQuery = URLQueryItem(name: "sk", value: VPLastFMLoginManager.authData?.key)
         
-        var request = URLRequest(url: VPLastFMAPIClient.shared.createURL(with: methodQuery, artistQuery, trackQuery, apiSigQuery,skQuery)!)
+        var request = URLRequest(url: try! VPLastFMAPIClient.shared.createURL(with: methodQuery, artistQuery, trackQuery, apiSigQuery,skQuery))
         request.httpMethod = "POST"
         URLSession.shared.dataTask(with: request) { (data, response, error) in
             do{
@@ -361,14 +377,17 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
     }
     
     
-    public static func search(name:String, artist: String?, completion: @escaping ([VPLastFMTrack])->()) {
+    public static func search(name:String, artist: String?, completion: @escaping ([VPLastFMTrack]?,Error?)->()) {
         let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Track.search.rawValue)
         let trackQuery = URLQueryItem(name: "track", value: name)
         let artistQuery = URLQueryItem(name: "artist", value: artist)
-        guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,trackQuery,artistQuery) else {completion([]); return}
-        
-        VPLastFMAPIClient.shared.getModel([VPLastFMTrack].self, url: url, path: ["results","trackmatches"], arrayName: "track") { result in
-            completion(result ?? [])
+        do{
+            let url = try VPLastFMAPIClient.shared.createURL(with: methodQuery,trackQuery,artistQuery)
+            VPLastFMAPIClient.shared.getModel([VPLastFMTrack].self, url: url, path: ["results","trackmatches"], arrayName: "track") { result, error  in
+                completion(result, error)
+            }
+        } catch let error{
+            completion(nil,error)
         }
     }
 }

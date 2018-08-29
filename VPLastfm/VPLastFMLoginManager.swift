@@ -39,14 +39,14 @@ public class VPLastFMLoginManager {
             "password" : password,
             "username" : username
         ]
-        let apiSig = VPLastFMAPIClient.shared.createApiSigString(with: apiSigComponents)
+        let apiSig = try! VPLastFMAPIClient.shared.createApiSigString(with: apiSigComponents)
         
         let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Auth.getMobileSession.rawValue)
         let usernameQuery = URLQueryItem(name: "username", value: username)
         let passwordQuery = URLQueryItem(name: "password", value: password)
         let apiSigQuery = URLQueryItem(name: "api_sig", value: apiSig)
 		
-		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery, usernameQuery, passwordQuery, apiSigQuery) else {completion(nil);return}
+		guard let url = try? VPLastFMAPIClient.shared.createURL(with: methodQuery, usernameQuery, passwordQuery, apiSigQuery) else {completion(nil);return}
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")

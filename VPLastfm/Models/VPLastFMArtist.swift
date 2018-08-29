@@ -137,7 +137,8 @@ final public class VPLastFMArtist: Codable,VPLastFMModel {
 	public static func getCorrection(for name: String, completion:@escaping (String?)->()){
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Artist.getCorrection.rawValue)
 		let artistQuery = URLQueryItem(name: "artist", value: name)
-		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery) else {completion(nil); return}
+        
+		guard let url = try? VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery) else {completion(nil); return}
 		
 		URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
 			do{
@@ -155,97 +156,117 @@ final public class VPLastFMArtist: Codable,VPLastFMModel {
 		
 	}
 	
-	public static func getArtist(byName name:String, completion: @escaping (VPLastFMArtist?)->()){
+	public static func getArtist(byName name:String, completion: @escaping (VPLastFMArtist?,Error?)->()){
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Artist.getInfo.rawValue)
 		let artistQuery = URLQueryItem(name: "artist", value: name)
-		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery) else {completion(nil); return}
-        
-        VPLastFMAPIClient.shared.getModel(VPLastFMArtist.self, url: url, path: ["artist"], arrayName: nil) { result in
-            completion(result)
+        do{
+            let url = try VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery)
+            VPLastFMAPIClient.shared.getModel(VPLastFMArtist.self, url: url, path: ["artist"], arrayName: nil) { result, error  in
+                completion(result, error)
+            }
+        } catch let error{
+            completion(nil,error)
         }
 	}
 	
-    public func getSimilar(limit:Int, completion:@escaping ([VPLastFMArtist])->()) {
+    public func getSimilar(limit:Int, completion:@escaping ([VPLastFMArtist]?,Error?)->()) {
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Artist.getSimilar.rawValue)
 		let limitQuery = URLQueryItem(name: "limit", value: String(limit))
 		let artistQuery = URLQueryItem(name: "artist", value: self.name)
-		
-		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,limitQuery,artistQuery) else {completion([]); return}
-        
-        VPLastFMAPIClient.shared.getModel([VPLastFMArtist].self, url: url, path: ["similarartists"], arrayName: "artist") { result in
-            completion(result ?? [])
+        do{
+            let url = try VPLastFMAPIClient.shared.createURL(with: methodQuery,limitQuery,artistQuery)
+            VPLastFMAPIClient.shared.getModel([VPLastFMArtist].self, url: url, path: ["similarartists"], arrayName: "artist") { result, error  in
+                completion(result, error)
+            }
+        } catch let error{
+            completion(nil,error)
         }
 	}
 	
-	public func getTopAlbums(completion:@escaping ([VPLastFMAlbum])->()) {
+	public func getTopAlbums(completion:@escaping ([VPLastFMAlbum]?,Error?)->()) {
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Artist.getTopAlbums.rawValue)
 		let artistQuery = URLQueryItem(name: "artist", value: self.name)
-		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery) else {completion([]); return}
-        
-        VPLastFMAPIClient.shared.getModel([VPLastFMAlbum].self, url: url, path: ["topalbums"], arrayName: "album") { result in
-            completion(result ?? [])
+        do{
+            let url = try VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery)
+            VPLastFMAPIClient.shared.getModel([VPLastFMAlbum].self, url: url, path: ["topalbums"], arrayName: "album") { result, error  in
+                completion(result, error)
+            }
+        } catch let error{
+            completion(nil,error)
         }
 	}
 	
 	
-	public func getTopTags(limit:Int = 10, completion:@escaping ([VPLastFMTag])->()) {
+	public func getTopTags(limit:Int = 10, completion:@escaping ([VPLastFMTag]?,Error?)->()) {
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Artist.getTopTags.rawValue)
 		let artistQuery = URLQueryItem(name: "artist", value: self.name)
-		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery) else {completion([]); return}
-        
-        VPLastFMAPIClient.shared.getModel([VPLastFMTag].self, url: url, path: ["toptags"], arrayName: "tag") { result in
-            completion(result ?? [])
+        do{
+            let url = try VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery)
+            VPLastFMAPIClient.shared.getModel([VPLastFMTag].self, url: url, path: ["toptags"], arrayName: "tag") { result, error  in
+                completion(result, error)
+            }
+        } catch let error{
+            completion(nil,error)
         }
 	}
 	
-	public func getTopTracks(limit:Int = 50, completion:@escaping ([VPLastFMTrack])->()) {
+	public func getTopTracks(limit:Int = 50, completion:@escaping ([VPLastFMTrack]?,Error?)->()) {
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Artist.getTopTracks.rawValue)
 		let artistQuery = URLQueryItem(name: "artist", value: self.name)
 		let limitQuery = URLQueryItem(name: "limit", value: String(limit))
-        
-		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery,limitQuery) else {completion([]);return}
-        
-        VPLastFMAPIClient.shared.getModel([VPLastFMTrack].self, url: url, path: ["toptracks"], arrayName: "track") { result in
-            completion(result ?? [])
+        do{
+            let url = try VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery,limitQuery)
+            VPLastFMAPIClient.shared.getModel([VPLastFMTrack].self, url: url, path: ["toptracks"], arrayName: "track") { result, error  in
+                completion(result, error)
+            }
+        } catch let error{
+            completion(nil,error)
         }
 	}
 	
-	public func getSimilarByTags(limit:Int, completion:@escaping ([VPLastFMArtist])->()){
-		self.getTopTags(limit: 1) { tags in
+	public func getSimilarByTags(limit:Int, completion:@escaping ([VPLastFMArtist]?,Error?)->()){
+        self.getTopTags(limit: 1) { tags,error  in
 			let dispatchGroup = DispatchGroup()
 			var result:[VPLastFMArtist] = []
-			for tag in tags {
-				dispatchGroup.enter()
-				tag.getTopArtists(limit: Int(limit/tags.count-1), completion: { (artistsByTag) in
-					result.append(contentsOf: artistsByTag)
-					dispatchGroup.leave()
-				})
-			}
+            tags?.forEach{
+                dispatchGroup.enter()
+                $0.getTopArtists(limit: Int(limit/tags!.count-1), completion: { artistsByTag,error  in
+                    artistsByTag?.forEach{
+                        result.append($0)
+                    }
+                    dispatchGroup.leave()
+                })
+            }
 			dispatchGroup.notify(queue: .main) {[weak self] in
 				let filteredResult = result.filter{$0 != self}
-				completion(filteredResult)
+                completion(filteredResult, nil)
 			}
 		}
 	}
 	
-	public static func getTop(limit:Int = 50, completion: @escaping ([VPLastFMArtist])->()) {
+	public static func getTop(limit:Int = 50, completion: @escaping ([VPLastFMArtist]?,Error?)->()) {
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Chart.getTopArtists.rawValue)
 		let limitQuery = URLQueryItem(name: "limit", value: String(limit))
-		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,limitQuery) else {completion([]); return}
-        
-        VPLastFMAPIClient.shared.getModel([VPLastFMArtist].self, url: url, path: ["artists"], arrayName: "artist") { result in
-            completion(result ?? [])
+        do{
+            let url = try VPLastFMAPIClient.shared.createURL(with: methodQuery,limitQuery)
+            VPLastFMAPIClient.shared.getModel([VPLastFMArtist].self, url: url, path: ["artists"], arrayName: "artist") { result, error  in
+                completion(result, error)
+            }
+        } catch let error{
+            completion(nil,error)
         }
 	}
 	
-	public static func search(artists name:String, completion: @escaping ([VPLastFMArtist])->()) {
+	public static func search(artists name:String, completion: @escaping ([VPLastFMArtist]?,Error?)->()) {
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Artist.search.rawValue)
 		let trackQuery = URLQueryItem(name: "artist", value: name)
-		
-		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,trackQuery) else {completion([]); return}
-        
-        VPLastFMAPIClient.shared.getModel([VPLastFMArtist].self, url: url, path: ["results","artistmatches"], arrayName: "artist") { result in
-            completion(result ?? [])
+        do{
+            let url = try VPLastFMAPIClient.shared.createURL(with: methodQuery,trackQuery)
+            VPLastFMAPIClient.shared.getModel([VPLastFMArtist].self, url: url, path: ["results","artistmatches"], arrayName: "artist") { result, error  in
+                completion(result, error)
+            }
+        } catch let error{
+            completion(nil,error)
         }
 	}
 }

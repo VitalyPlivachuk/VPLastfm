@@ -23,176 +23,176 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     func apiTest(){
-        VPLastFMTrack.getTrack(byName: "One", artist: "Metallica") { track in
+        VPLastFMTrack.getTrack(byName: "One", artist: "Metallica") { track,error in
             print("\n*******VPLastFMTrack.getTrack*********")
-            print("\(track!.artist.name) - \(track!.name)")
+            print("\(track?.artist.name ?? "") - \(track?.name ?? "")")
             
-            track?.getSimilar(limit: 5, completion: { tracks in
+            track?.getSimilar(limit: 5, completion: { tracks,error in
                 print("\n*******VPLastFMTrack.getSimilar*********")
-                tracks.forEach{
+                tracks?.forEach{
                     print("\($0.artist.name) - \($0.name)")
                 }
             })
             
-            track?.getTopTags(limit: 5, completion: { tags in
+            track?.getTopTags(limit: 5, completion: { tags,error in
                 print("\n*******VPLastFMTrack.getTopTags*********")
-                tags.forEach{
+                tags?.forEach{
                     print("\($0.name)")
                 }
             })
         }
         
-        VPLastFMTrack.getTop(limit: 15) {tracks in
+        VPLastFMTrack.getTop(limit: 15) {tracks,error in
             print("\n*******VPLastFMTrack.getTop*********")
-            tracks.forEach{
+            tracks?.forEach{
                 print("\($0.artist.name) - \($0.name)")
             }
         }
         
-        VPLastFMTrack.search(name: "Nin", artist: nil) { tracks in
+        VPLastFMTrack.search(name: "Nin", artist: nil) { tracks,error in
             print("\n*******VPLastFMTrack.Search*********")
-            tracks.forEach{
+            tracks?.forEach{
                 print("\($0.artist.name) - \($0.name)")
             }
         }
         
-        VPLastFMUser.getUser(byName: "vetal_floyd") { user in
+        VPLastFMUser.getUser(byName: "vetal_floyd") { user,error in
             print("\n*******VPLastFMUser.getUser*********")
-            print(user!.name)
+            print(user?.name ?? "")
             
-            user?.getArtistTracks(artist: "metallica", completion: { tracks in
+            user?.getArtistTracks(artist: "metallica", completion: { tracks,error in
                 print("\n*******VPLastFMUser.getArtistTracks*********")
-                tracks.forEach{
+                tracks?.forEach{
                     print("\($0.artist.name) - \($0.name)")
                 }
             })
             
-            user?.getLovedTracks(completion: {tracks in
+            user?.getLovedTracks(completion: {tracks,error in
                 print("\n*******VPLastFMUser.getLovedTracks*********")
-                tracks.forEach{
+                tracks?.forEach{
                     print("\($0.artist.name) - \($0.name)")
                 }
             })
             
-            user?.getRecentTracks(from: Date.init(timeIntervalSince1970: 3333), to: Date(), completion: { tracks in
+            user?.getRecentTracks(from: Date.init(timeIntervalSince1970: 3333), to: Date(), completion: { tracks,error in
                 print("\n*******VPLastFMUser.getRecentTracks*********")
-                tracks.forEach{
+                tracks?.forEach{
                     print("\($0.artist.name) - \($0.name)")
                 }
             })
             
-            user?.getTopAlbums(completion: { albums in
+            user?.getTopAlbums(completion: { albums,error in
                 print("\n*******VPLastFMUser.getTopAlbums*********")
-                albums.forEach{
-                    print("\($0.artist?.name) - \($0.name)")
+                albums?.forEach{
+                    print("\($0.artist?.name ?? "") - \($0.name)")
                 }
             })
             
-            user?.getTopArtists(completion: { artists in
+            user?.getTopArtists(completion: { artists,error in
                 print("\n*******VPLastFMUser.getTopArtists*********")
-                artists.forEach{
+                artists?.forEach{
                     print("\($0.name)")
                 }
             })
             
-            user?.getTopTracks(completion: { tracks in
+            user?.getTopTracks(completion: { tracks,error in
                 print("\n*******VPLastFMUser.getTopTracks*********")
-                tracks.forEach{
+                tracks?.forEach{
                     print("\($0.artist.name) - \($0.name)")
                 }
             })
             
         }
         
-        VPLastFMTag.getTag(byName: "rock") { tag in
+        VPLastFMTag.getTag(byName: "rock") { tag,error in
             print("\n*******VPLastFMTag.getTag*********")
-            print(tag!.name)
+            print(tag?.name ?? "")
             
-            tag?.getSimilar(completion: { tags in
+            tag?.getSimilar(completion: { tags,error in
                 print("\n*******VPLastFMTag.getSimilar*********")
-                tags.forEach{
+                tags?.forEach{
                     print("\($0.name)")
                 }
             })
             
-            tag?.getTopAlbums(completion: { albums in
+            tag?.getTopAlbums(completion: { albums,error in
                 print("\n*******VPLastFMTag.getTopAlbums*********")
-                albums.forEach{
-                    print("\($0.artist?.name) - \($0.name)")
+                albums?.forEach{
+                    print("\($0.artist?.name ?? "") - \($0.name)")
                 }
             })
             
-            tag?.getTopArtists(limit: 5, completion: { artists in
+            tag?.getTopArtists(limit: 5, completion: { artists,error in
                 print("\n*******VPLastFMTag.getTopArtists*********")
-                artists.forEach{
+                artists?.forEach{
                     print("\($0.name)")
                 }
             })
             
-            tag?.getTopTracks(limit: 5, completion: { tracks in
+            tag?.getTopTracks(limit: 5, completion: { tracks,error in
                 print("\n*******VPLastFMTag.getTopTracks*********")
-                tracks.forEach{
+                tracks?.forEach{
                     print("\($0.artist.name) - \($0.name)")
                 }
             })
         }
-        VPLastFMTag.getTopTags(completion: { tags in
+        VPLastFMTag.getTopTags(completion: { tags,error in
             print("\n*******VPLastFMTag.getTopTags*********")
-            tags.forEach{
+            tags?.forEach{
                 print("\($0.name)")
             }
         })
         
-        VPLastFMArtist.getArtist(byName: "Metallica") { artist in
+        VPLastFMArtist.getArtist(byName: "Metallica") { artist,error in
             print("\n*******VPLastFMArtist.getArtist*********")
-            print("\(artist!.name)")
+            print("\(artist?.name ?? "")")
             
-            artist?.getSimilar(limit: 5, completion: { artists in
+            artist?.getSimilar(limit: 5, completion: { artists,error in
                 print("\n*******VPLastFMArtist.getSimilar*********")
-                artists.forEach{
+                artists?.forEach{
                     print("\($0.name)")
                 }
             })
             
-            artist?.getTopAlbums(completion: { albums in
+            artist?.getTopAlbums(completion: { albums,error in
                 print("\n*******VPLastFMArtist.getTopAlbums*********")
-                albums.forEach{
-                    print("\($0.artist?.name) - \($0.name)")
+                albums?.forEach{
+                    print("\($0.artist?.name ?? "") - \($0.name)")
                 }
             })
             
-            artist?.getTopTags(completion: { tags in
+            artist?.getTopTags(completion: { tags,error in
                 print("\n*******VPLastFMArtist.getTopTags*********")
-                tags.forEach{
+                tags?.forEach{
                     print("\($0.name)")
                 }
             })
             
-            artist?.getTopTracks(limit: 5, completion: { tracks in
+            artist?.getTopTracks(limit: 5, completion: { tracks,error in
                 print("\n*******VPLastFMArtist.getTopTracks*********")
-                tracks.forEach{
+                tracks?.forEach{
                     print("\($0.artist.name) - \($0.name)")
                 }
             })
         }
         
-        VPLastFMArtist.getTop(limit: 5) { artists in
+        VPLastFMArtist.getTop(limit: 5) { artists,error in
             print("\n*******VPLastFMArtist.getTop*********")
-            artists.forEach{
+            artists?.forEach{
                 print("\($0.name)")
             }
         }
         
-        VPLastFMArtist.search(artists: "Nine") { artists in
+        VPLastFMArtist.search(artists: "Nine") { artists,error in
             print("\n*******VPLastFMArtist.search*********")
-            artists.forEach{
+            artists?.forEach{
                 print("\($0.name)")
             }
         }
         
-        VPLastFMAlbum.getAlbum(byName: "Help", artist: "Beatles") { album in
+        VPLastFMAlbum.getAlbum(byName: "Help", artist: "Beatles") { album,error in
             print("\n*******VPLastFMAlbum.getAlbum*********")
-            print(album?.name)
+            print(album?.name ?? "")
             album?.tracks?.forEach{
                 print("\($0.artist.name) - \($0.name)")
             }
