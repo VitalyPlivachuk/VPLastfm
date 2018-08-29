@@ -183,6 +183,9 @@ public class VPLastFMAPIClient {
     func getModel<T:Decodable>(_ t:T.Type, url:URL, path:[String]?, arrayName:String?, completion:@escaping (T?, Error?)->()) {
         URLSession.shared.dataTask(with: url, completionHandler: {(data, response, error) in
             do{
+                if let error = error{
+                    throw error
+                }
                 guard let data = data else {throw VPLastFMAPIClientError.parse}
                 guard var json = try! JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw VPLastFMAPIClientError.parse}
                 
