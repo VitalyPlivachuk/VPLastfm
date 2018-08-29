@@ -137,7 +137,7 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
     
     public func getSimilarByTags(limit:Int, completion:@escaping ([VPLastFMTrack])->()){
         var result: [VPLastFMTrack] = []
-        self.artist.getSimilar(limit: Int(limit/3), extended: true) { similarArtists in
+        self.artist.getSimilar(limit: Int(limit/3)) { similarArtists in
             let dg = DispatchGroup()
             for artist in similarArtists{
                 dg.enter()
