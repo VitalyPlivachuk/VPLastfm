@@ -42,136 +42,59 @@ final public class VPLastFMTag: VPLastFMModel, Codable {
 		let tagQuery = URLQueryItem(name: "tag", value: name)
 		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,tagQuery) else {completion(nil); return}
 		
-		URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
-			do{
-				guard let data = data else {throw LastFMTagError.parse}
-				guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMTagError.parse}
-				guard let tag = json["tag"] as? [String:AnyObject] else {throw LastFMTagError.parse}
-				let decoder = JSONDecoder()
-				decoder.dateDecodingStrategy = .iso8601
-				let tagJSON = try JSONSerialization.data(withJSONObject: tag, options: [])
-				let result = try decoder.decode(VPLastFMTag.self, from: tagJSON)
-				completion(result)
-			} catch _{
-				completion(nil)
-			}
-		}).resume()
+        VPLastFMAPIClient.shared.getModel(VPLastFMTag.self, url: url, path: ["tag"], arrayName: nil) { result in
+            completion(result)
+        }
 	}
 	
 	public func getSimilar(completion:@escaping ([VPLastFMTag])->()) {
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Tag.getSimilar.rawValue)
 		let tagQuery = URLQueryItem(name: "tag", value: self.name)
 		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,tagQuery) else {completion([]); return}
-		var results:[VPLastFMTag] = []
 		
-		URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
-			do{
-				guard let data = data else {throw LastFMTagError.parse}
-				guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMTagError.parse}
-				guard let similarTracks = json["similartags"] as? [String:AnyObject] else {throw LastFMTagError.parse}
-				guard let tags = similarTracks["tag"] as? [[String:AnyObject]] else {throw LastFMTagError.parse}
-				for tag in tags{
-					let tagJSON = try JSONSerialization.data(withJSONObject: tag, options: [])
-					results.append(try JSONDecoder().decode(VPLastFMTag.self, from: tagJSON))
-				}
-				completion(results)
-			} catch _{
-				completion([])
-			}
-		}).resume()
+        VPLastFMAPIClient.shared.getModel([VPLastFMTag].self, url: url, path: ["similartags"], arrayName: "tag") { result in
+            completion(result ?? [])
+        }
 	}
 	
 	public func getTopAlbums(completion:@escaping ([VPLastFMAlbum])->()) {
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Tag.getTopAlbums.rawValue)
 		let tagQuery = URLQueryItem(name: "tag", value: self.name)
-		var results:[VPLastFMAlbum] = []
 		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,tagQuery) else {completion([]); return}
 		
-		URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
-			do{
-				guard let data = data else {throw LastFMTagError.parse}
-				guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMTagError.parse}
-				guard let topAlbums = json["albums"] as? [String:AnyObject] else {throw LastFMTagError.parse}
-				guard let albums = topAlbums["album"] as? [[String:AnyObject]] else {throw LastFMTagError.parse}
-				for album in albums{
-					let albumJSON = try JSONSerialization.data(withJSONObject: album, options: [])
-					results.append(try JSONDecoder().decode(VPLastFMAlbum.self, from: albumJSON))
-				}
-				completion(results)
-			} catch _{
-				completion([])
-			}
-		}).resume()
+        VPLastFMAPIClient.shared.getModel([VPLastFMAlbum].self, url: url, path: ["albums"], arrayName: "album") { result in
+            completion(result ?? [])
+        }
 	}
 	
 	public func getTopArtists(limit:Int = 50, completion:@escaping ([VPLastFMArtist])->()) {
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Tag.getTopArtists.rawValue)
 		let tagQuery = URLQueryItem(name: "tag", value: self.name)
-		var results:[VPLastFMArtist] = []
 		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,tagQuery) else {completion([]); return}
-		
-		URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
-			do{
-				guard let data = data else {throw LastFMTagError.parse}
-				guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMTagError.parse}
-				guard let topArtists = json["topartists"] as? [String:AnyObject] else {throw LastFMTagError.parse}
-				guard let artists = topArtists["artist"] as? [[String:AnyObject]] else {throw LastFMTagError.parse}
-				for (index,artist) in artists.enumerated(){
-					if index > limit {break}
-					let artistJSON = try JSONSerialization.data(withJSONObject: artist, options: [])
-					results.append(try JSONDecoder().decode(VPLastFMArtist.self, from: artistJSON))
-				}
-				completion(results)
-			} catch _{
-				completion([])
-			}
-		}).resume()
+        
+        VPLastFMAPIClient.shared.getModel([VPLastFMArtist].self, url: url, path: ["topartists"], arrayName: "artist") { result in
+            completion(result ?? [])
+        }
 	}
 	
 	public func getTopTracks(limit:Int = 50, completion:@escaping ([VPLastFMTrack])->()) {
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Tag.getTopTracks.rawValue)
 		let tagQuery = URLQueryItem(name: "tag", value: self.name)
 		let limitQuery = URLQueryItem(name: "limit", value: String(limit))
-		var results:[VPLastFMTrack] = []
 		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,tagQuery,limitQuery) else {completion([]); return}
 		
-		URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
-			do{
-				guard let data = data else {throw LastFMTagError.parse}
-				guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMTagError.parse}
-				guard let topTracks = json["tracks"] as? [String:AnyObject] else {throw LastFMTagError.parse}
-				guard let tracks = topTracks["track"] as? [[String:AnyObject]] else {throw LastFMTagError.parse}
-				for track in tracks{
-					let trackJSON = try JSONSerialization.data(withJSONObject: track, options: [])
-					results.append(try JSONDecoder().decode(VPLastFMTrack.self, from: trackJSON))
-				}
-				completion(results)
-			} catch _{
-				completion([])
-			}
-		}).resume()
+        VPLastFMAPIClient.shared.getModel([VPLastFMTrack].self, url: url, path: ["tracks"], arrayName: "track") { result in
+            completion(result ?? [])
+        }
 	}
 	
 	public static func getTopTags(completion:@escaping ([VPLastFMTag])->()) {
 		let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Tag.getTopTags.rawValue)
-		var results:[VPLastFMTag] = []
 		guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery) else {completion([]); return}
-		
-		URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
-			do{
-				guard let data = data else {throw LastFMTagError.parse}
-				guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMTagError.parse}
-				guard let topTags = json["toptags"] as? [String:AnyObject] else {throw LastFMTagError.parse}
-				guard let tags = topTags["tag"] as? [[String:AnyObject]] else {throw LastFMTagError.parse}
-				for tag in tags{
-					let tagJSON = try JSONSerialization.data(withJSONObject: tag, options: [])
-					results.append(try JSONDecoder().decode(VPLastFMTag.self, from: tagJSON))
-				}
-				completion(results)
-			} catch _{
-				completion([])
-			}
-		}).resume()
+        
+        VPLastFMAPIClient.shared.getModel([VPLastFMTag].self, url: url, path: ["toptags"], arrayName: "tag") { result in
+            completion(result ?? [])
+        }
 	}
 	
 }
