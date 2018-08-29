@@ -97,7 +97,7 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
         URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
             do{
                 guard let data = data else {throw LastFMTrackError.parse}
-                guard let json = try! JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMTrackError.parse}
+                guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMTrackError.parse}
                 guard let corrections = json["corrections"] as? [String:AnyObject] else {throw LastFMTrackError.parse}
                 guard let correction = corrections["correction"] as? [String:AnyObject] else {throw LastFMTrackError.parse}
                 guard let track = correction["track"] as? [String:AnyObject] else {throw LastFMTrackError.parse}
@@ -117,54 +117,23 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
         let artistQuery = URLQueryItem(name: "artist", value: artist)
         guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,trackQuery,artistQuery) else {completion(nil); return}
         
-        URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
-            do{
-                guard let data = data else {throw LastFMTrackError.parse}
-                guard let json = try! JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMTrackError.parse}
-                guard let track = json["track"] as? [String:AnyObject] else {throw LastFMTrackError.parse}
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
-                let trackJSON = try JSONSerialization.data(withJSONObject: track, options: [])
-                let result = try decoder.decode(VPLastFMTrack.self, from: trackJSON)
-                completion(result)
-            } catch _{
-                completion(nil)
-            }
-        }).resume()
+        VPLastFMAPIClient.shared.getModel(VPLastFMTrack.self, url: url, path: ["track"], arrayName: nil) { result in
+            completion(result)
+        }
     }
     
-    public func getSimilar(limit:Int, extended:Bool = false,completion:@escaping ([VPLastFMTrack])->()) {
+    public func getSimilar(limit:Int,completion:@escaping ([VPLastFMTrack])->()) {
         let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Track.getSimilar.rawValue)
         let limitQuery = URLQueryItem(name: "limit", value: String(limit))
         let artistQuery = URLQueryItem(name: "artist", value: self.artist.name)
         let trackQuery = URLQueryItem(name: "track", value: self.name)
         
-        var results:[VPLastFMTrack] = []
-        
         guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,limitQuery,artistQuery,trackQuery) else {completion([]); return}
-        URLSession.shared.dataTask(with: url, completionHandler: {[weak self] (data, response, error) in
-            do{
-                guard let data = data else {throw LastFMTrackError.parse}
-                guard let json = try! JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMTrackError.parse}
-                guard let similarTracks = json["similartracks"] as? [String:AnyObject] else {throw LastFMTrackError.parse}
-                guard let tracks = similarTracks["track"] as? [[String:AnyObject]] else {throw LastFMTrackError.parse}
-                for track in tracks{
-                    let trackJSON = try! JSONSerialization.data(withJSONObject: track, options: [])
-                    results.append(try! JSONDecoder().decode(VPLastFMTrack.self, from: trackJSON))
-                }
-                if results.isEmpty && extended{
-                    self?.getSimilarByTags(limit: limit, completion: { similarTracksByTags in
-                        completion(similarTracksByTags)
-                    })
-                } else {
-                    completion(results)
-                }
-            } catch _{
-                completion([])
-            }
-        }).resume()
+        
+        VPLastFMAPIClient.shared.getModel([VPLastFMTrack].self, url: url, path: ["similartracks"], arrayName: "track") { result in
+            completion(result ?? [])
+        }
     }
-    
     
     public func getSimilarByTags(limit:Int, completion:@escaping ([VPLastFMTrack])->()){
         var result: [VPLastFMTrack] = []
@@ -191,24 +160,9 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
         let limitQuery = URLQueryItem(name: "limit", value: String(limit))
         guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,limitQuery) else {completion([]); return}
         
-        URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
-            do{
-                guard let data = data else {throw LastFMTrackError.parse}
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
-                var searchResult:[VPLastFMTrack] = []
-                guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMTrackError.parse}
-                guard let tracksMatches = json["tracks"] as? [String:AnyObject] else {throw LastFMTrackError.parse}
-                guard let tracks = tracksMatches["track"] as? [[String:AnyObject]] else {throw LastFMTrackError.parse}
-                for track in tracks{
-                    let trackJSON = try JSONSerialization.data(withJSONObject: track, options: [])
-                    searchResult.append(try JSONDecoder().decode(VPLastFMTrack.self, from: trackJSON))
-                }
-                completion(searchResult)
-            } catch _{
-                completion([])
-            }
-        }).resume()
+        VPLastFMAPIClient.shared.getModel([VPLastFMTrack].self, url: url, path: ["tracks"], arrayName: "track") { result in
+            completion(result ?? [])
+        }
     }
     
     public func getTopTags(limit:Int = 10, completion:@escaping ([VPLastFMTag])->()) {
@@ -216,24 +170,11 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
         let artistQuery = URLQueryItem(name: "artist", value: self.artist.name)
         let trackQuery = URLQueryItem(name: "track", value: self.name)
         let limitQuery = URLQueryItem(name: "limit", value: String(limit))
-        var results:[VPLastFMTag] = []
         guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,artistQuery,trackQuery,limitQuery) else {completion([]); return}
         
-        URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
-            do{
-                guard let data = data else {throw LastFMTrackError.parse}
-                guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMTrackError.parse}
-                guard let topTags = json["toptags"] as? [String:AnyObject] else {throw LastFMTrackError.parse}
-                guard let tags = topTags["tag"] as? [[String:AnyObject]] else {throw LastFMTrackError.parse}
-                for tag in tags{
-                    let tagJSON = try JSONSerialization.data(withJSONObject: tag, options: [])
-                    results.append(try JSONDecoder().decode(VPLastFMTag.self, from: tagJSON))
-                }
-                completion(results)
-            } catch _{
-                completion([])
-            }
-        }).resume()
+        VPLastFMAPIClient.shared.getModel([VPLastFMTag].self, url: url, path: ["toptags"], arrayName: "tag") { result in
+            completion(result ?? [])
+        }
     }
     
     public func love(completion: @escaping (Bool)->()) {
@@ -419,13 +360,6 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
             }.resume()
     }
     
-    //    static let operationQueue: OperationQueue = {
-    //        let oq = OperationQueue()
-    //        oq.name = "searchOperations"
-    //        oq.maxConcurrentOperationCount = 1
-    //        oq.qualityOfService = .userInteractive
-    //        return oq
-    //    }()
     
     public static func search(name:String, artist: String?, completion: @escaping ([VPLastFMTrack])->()) {
         let methodQuery = URLQueryItem(name: "method", value: VPLastFMAPIClient.APIMethods.Track.search.rawValue)
@@ -433,35 +367,10 @@ final public class VPLastFMTrack: Codable, VPLastFMModel {
         let artistQuery = URLQueryItem(name: "artist", value: artist)
         guard let url = VPLastFMAPIClient.shared.createURL(with: methodQuery,trackQuery,artistQuery) else {completion([]); return}
         
-        //        let request = URLRequest(url: url)
-        //        let operation = DataOperation(session: URLSession.shared, request: request, networkCompletionHandler: { data, response, error in
-        
-        
-        
-        
-        URLSession.shared.dataTask(with: url, completionHandler: { data, response, error in
-            do{
-                guard let data = data else {throw LastFMTrackError.parse}
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
-                var searchResult:[VPLastFMTrack] = []
-                guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw LastFMTrackError.parse}
-                guard let results = json["results"] as? [String:AnyObject] else {throw LastFMTrackError.parse}
-                guard let trackMatches = results["trackmatches"] as? [String:AnyObject] else {throw LastFMTrackError.parse}
-                guard let tracks = trackMatches["track"] as? [[String:AnyObject]] else {throw LastFMTrackError.parse}
-                for track in tracks{
-                    let trackJSON = try JSONSerialization.data(withJSONObject: track, options: [])
-                    searchResult.append(try JSONDecoder().decode(VPLastFMTrack.self, from: trackJSON))
-                }
-                completion(searchResult)
-            } catch _{
-                completion([])
-            }
-        }).resume()
-        //        operationQueue.cancelAllOperations()
-        //        operationQueue.addOperation(operation)
+        VPLastFMAPIClient.shared.getModel([VPLastFMTrack].self, url: url, path: ["results","trackmatches"], arrayName: "track") { result in
+            completion(result ?? [])
+        }
     }
-    
 }
 
 extension VPLastFMTrack: Hashable{

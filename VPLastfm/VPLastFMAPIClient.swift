@@ -24,6 +24,10 @@ public class VPLastFMAPIClient {
         self.sharedSecret = sharedSecret
     }
     
+    enum VPLastFMAPIClientError:Error {
+        case parse
+    }
+    
 	public enum APIMethods {
 		enum Album : String {
 			case addTags = "album.addTags"
@@ -157,4 +161,30 @@ public class VPLastFMAPIClient {
 		let apiSigMD5hex = apiSig.getMD5hex()
 		return apiSigMD5hex
 	}
+    
+    func getModel<T:Decodable>(_ t:T.Type, url:URL, path:[String]?, arrayName:String?, completion:@escaping (T?)->()) {
+        URLSession.shared.dataTask(with: url, completionHandler: {(data, response, error) in
+            do{
+                guard let data = data else {throw VPLastFMAPIClientError.parse}
+                guard var json = try! JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] else {throw VPLastFMAPIClientError.parse}
+                
+                try? path?.forEach{
+                    guard let underRoot = json[$0] as? [String:AnyObject] else {throw VPLastFMAPIClientError.parse}
+                    json = underRoot
+                }
+                
+                let array: [[String:AnyObject]]?
+                if let arrayName = arrayName{
+                    array = json[arrayName] as? [[String:AnyObject]]
+                } else {array = nil}
+                
+                let cleanJSON = try JSONSerialization.data(withJSONObject: array ?? json, options: [])
+                
+                let result = try JSONDecoder().decode(T.self, from: cleanJSON)
+                completion(result)
+            } catch _{
+                completion(nil)
+            }
+        }).resume()
+    }
 }
